@@ -6,7 +6,8 @@ FAT_CAL_PER_GRAM = 9
 # Ratios for bodyweight
 MAINTENANCE_MULTIPLIER = 15
 PROTEIN_PER_KG = 2.0 
-FAT_PER_KG = 0.5   
+FAT_PER_KG = 0.5
+WATER_PER_KG = 0.035
 # Goal settings
 CALORIE_ADJUSTMENT = 300
 def calculate_maintenance(weight_kg, height, age, gender, activity):
@@ -31,11 +32,20 @@ def final_calories(maintenance_calories, goal):
     result = maintenance_calories
     message = f"Final calories: {int(result)} calories, you will maintain your current weight."
     return result, message
-def save_diet_report(goal, message_goal, protein, fat, final_carbs_grams):
+def calculate_water(weight_kg, activity):
+  water = weight_kg * WATER_PER_KG 
+  plus_activity = 0
+  if activity in ("4", "5"):
+    plus_activity = 0.500
+    
+  total_water = water + plus_activity
+  return total_water
+def save_diet_report(goal, message_goal, protein, fat, final_carbs_grams, water_liters):
   with open("diet.txt", "w") as file:
       file.write(f"--- DIET REPORT: {goal.upper()} ---\n")
       file.write(f"{message_goal}\n")
       file.write("-" * 30 + "\n")
+      file.write(f"Daily water intake: {round(water_liters, 2)}L\n")
       file.write(f"Proteins: {int(protein)}g\n")
       file.write(f"Fats: {int(fat)}g\n")
       file.write(f"Carbs: {int(final_carbs_grams)}g\n")
@@ -76,6 +86,8 @@ def main():
       print(f"Sorry, '{goal}' that's not a valid option. Please, choose 'cut', 'bulk' or 'maintenance'.")
   calories_target, message_goal = final_calories(maintenance_calories, goal) 
   print(f"Maintenance calories: {int(maintenance_calories)} calories")
+  water_liters = calculate_water(weight_kg, activity)
+  print(f"Daily water intake: {round(water_liters, 2)} liters")
   # Calculation of fixed macronutrients (Protein and Fat)
   protein = weight_kg * PROTEIN_PER_KG
   protein_calories = protein * PROTEIN_CAL_PER_GRAM
@@ -90,6 +102,6 @@ def main():
       final_carbs_grams = max(0, carbs_total_cal / CARB_CAL_PER_GRAM)
       print(f"Your final carbohydrates for the chosen goal are: {int(final_carbs_grams)} grams. The remaining macronutrients are maintained at the same maintenance levels.")
       # Save results to a text file report
-      save_diet_report(goal, message_goal, protein, fat, final_carbs_grams)    
+      save_diet_report(goal, message_goal, protein, fat, final_carbs_grams, water_liters)    
 if __name__ == "__main__":
     main()
