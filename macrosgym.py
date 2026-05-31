@@ -13,9 +13,9 @@ CALORIE_ADJUSTMENT = 300
 def calculate_maintenance(weight_kg, height, age, gender, activity):
     """Calculate the Basal Metabolic Rate (BMR) using the Harris-Benedict formula and apply the physical activity factor."""
     if gender == "male":
-     bmr = 66.47 + (13.75 * weight_kg) + (5 * height) - (6.75 * age)
+      bmr = 66.47 + (13.75 * weight_kg) + (5 * height) - (6.75 * age)
     else:
-     bmr = 655.1 + (9.56 * weight_kg) + (1.85 * height) - (4.67 * age)
+      bmr = 655.1 + (9.56 * weight_kg) + (1.85 * height) - (4.67 * age)
     physical_activity = {"1": 1.2, "2": 1.375, "3": 1.55, "4": 1.725, "5": 1.9}
     return bmr * physical_activity.get(activity, 1.2)
 def final_calories(maintenance_calories, goal):
@@ -54,54 +54,72 @@ def main():
   """Main program flow: gets user input, calculates macros, and saves a report to a text file."""
   # Clear terminal and get user data
   os.system('cls' if os.name == 'nt' else 'clear')
-  while True: 
-    try:
-      weight_kg = float(input("\nEnter your weight in kg (e.g.; 75): "))
-      height = float(input("\nEnter your height in cm (e.g., 175) " ))
-      age = int(input("\nEnter your age: "))
+  while True:
+    print("1 - Calculate new diet\n")
+    print("2 - View saved diet\n")
+    print("3 - Leave\n")
+    option = input("Choose an option:\n")
+    if option == "1":
+      while True:
+        try:
+          weight_kg = float(input("\nEnter your weight in kg (e.g.; 75): "))
+          height = float(input("\nEnter your height in cm (e.g., 175) " ))
+          age = int(input("\nEnter your age: "))
+          break
+        except ValueError:
+           print("Error: Please enter a valid number")
+      while True:
+        gender = (input("\nEnter 'male' or 'female': ")).lower()
+        if gender in ["male", "female"]:
+          break
+        print("Invalid option, try again.")
+      print("\n- Physical Activity Level -")
+      print("1: Sedentary (Little or none)")
+      print("2: Light (1-3 days/week)")
+      print("3: Moderate (3-5 days/week)")
+      print("4: Vigorous (6-7 days/week)")
+      print("5: Very Vigorous (Athlete/Physical Work)")
+      while True:
+          activity = (input("Choose an option (1-5): "))
+          if activity in ["1", "2", "3", "4", "5"]:
+            break
+          print("Error: Please, choose a number from 1 to 5")
+      maintenance_calories = calculate_maintenance(weight_kg, height, age, gender, activity)
+      while True:
+          goal = input("Is your goal to bulk up, cut down or maintain your current weight?: ").lower().strip()
+          if goal in ["bulk", "cut", "maintenance"]:
+            break
+          print(f"Sorry, '{goal}' that's not a valid option. Please, choose 'cut', 'bulk' or 'maintenance'.")
+      calories_target, message_goal = final_calories(maintenance_calories, goal) 
+      print(f"Maintenance calories: {int(maintenance_calories)} calories")
+      water_liters = calculate_water(weight_kg, activity)
+      print(f"Daily water intake: {round(water_liters, 2)} liters")
+      # Calculation of fixed macronutrients (Protein and Fat)
+      protein = weight_kg * PROTEIN_PER_KG
+      protein_calories = protein * PROTEIN_CAL_PER_GRAM
+      print(f"Proteins: {int(protein)} grams; equivalent to {int(protein_calories)} calories")
+      fat = weight_kg * FAT_PER_KG
+      fat_calories = fat * FAT_CAL_PER_GRAM
+      print(f"Fats: {int(fat)} grams; equivalent to {int(fat_calories)} calories")
+      print(message_goal)
+      if goal in ["cut", "bulk", "maintenance"]:
+          # Carbohydrates are calculated by difference to reach the calorie goal
+          carbs_total_cal = calories_target - (protein_calories + fat_calories)
+          final_carbs_grams = max(0, carbs_total_cal / CARB_CAL_PER_GRAM)
+          print(f"Your final carbohydrates for the chosen goal are: {int(final_carbs_grams)} grams. The remaining macronutrients are maintained at the same maintenance levels.")
+          # Save results to a text file report
+          save_diet_report(goal, message_goal, protein, fat, final_carbs_grams, water_liters)
+    elif option == "2":
+      try:
+        with open("diet.txt", "r") as file:
+          contenido = file.read()
+          print(contenido)
+      except FileNotFoundError:
+        print("No saved diet found. Please calculate a diet first (Option 1).\n")       
+    elif option == "3":
+      print("Closing the program, goodbye.\n")
       break
-    except ValueError:
-      print("Error: Please enter a valid number")
-  while True:
-    gender = (input("\nEnter 'male' or 'female': ")).lower()
-    if gender in ["male", "female"]:
-      break
-    print("Invalid option, try again.")
-  print("\n- Physical Activity Level -")
-  print("1: Sedentary (Little or none)")
-  print("2: Light (1-3 days/week)")
-  print("3: Moderate (3-5 days/week)")
-  print("4: Vigorous (6-7 days/week)")
-  print("5: Very Vigorous (Athlete/Physical Work)")
-  while True:
-      activity = (input("Choose an option (1-5): "))
-      if activity in ["1", "2", "3", "4", "5"]:
-        break
-      print("Error: Please, choose a number from 1 to 5")
-  maintenance_calories = calculate_maintenance(weight_kg, height, age, gender, activity)
-  while True:
-      goal = input("Is your goal to bulk up, cut down or maintain your current weight?: ").lower().strip()
-      if goal in ["bulk", "cut", "maintenance"]:
-        break
-      print(f"Sorry, '{goal}' that's not a valid option. Please, choose 'cut', 'bulk' or 'maintenance'.")
-  calories_target, message_goal = final_calories(maintenance_calories, goal) 
-  print(f"Maintenance calories: {int(maintenance_calories)} calories")
-  water_liters = calculate_water(weight_kg, activity)
-  print(f"Daily water intake: {round(water_liters, 2)} liters")
-  # Calculation of fixed macronutrients (Protein and Fat)
-  protein = weight_kg * PROTEIN_PER_KG
-  protein_calories = protein * PROTEIN_CAL_PER_GRAM
-  print(f"Proteins: {int(protein)} grams; equivalent to {int(protein_calories)} calories")
-  fat = weight_kg * FAT_PER_KG
-  fat_calories = fat * FAT_CAL_PER_GRAM
-  print(f"Fats: {int(fat)} grams; equivalent to {int(fat_calories)} calories")
-  print(message_goal)
-  if goal in ["cut", "bulk", "maintenance"]:
-      # Carbohydrates are calculated by difference to reach the calorie goal
-      carbs_total_cal = calories_target - (protein_calories + fat_calories)
-      final_carbs_grams = max(0, carbs_total_cal / CARB_CAL_PER_GRAM)
-      print(f"Your final carbohydrates for the chosen goal are: {int(final_carbs_grams)} grams. The remaining macronutrients are maintained at the same maintenance levels.")
-      # Save results to a text file report
-      save_diet_report(goal, message_goal, protein, fat, final_carbs_grams, water_liters)    
+    else:
+      print("Invalid option, try again\n")
 if __name__ == "__main__":
     main()
